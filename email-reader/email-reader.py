@@ -30,20 +30,21 @@ class EmailReader:
         # time.
         if os.path.exists('token.pickle'):
             with open('token.pickle', 'rb') as token:
-                credens = pickle.load(token)
+                self.credens = pickle.load(token)
+                
         # If there are no (valid) credentials available, let the user log in.
-        if not credens or not credens.valid:
-            if credens and credens.expired and credens.refresh_token:
-                credens.refresh(Request())
+        if not self.credens or not self.credens.valid:
+            if self.credens and self.credens.expired and self.credens.refresh_token:
+                self.credens.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
                     'credentials.json', SCOPES)
-                credens = flow.run_local_server(port=0)
+                self.credens = flow.run_local_server(port=0)
             # Save the credentials for the next run
             with open('token.pickle', 'wb') as token:
-                pickle.dump(credens, token)
+                pickle.dump(self.credens, token)
 
-        self.service = build('gmail', 'v1', credentials=credens)
+        self.service = build('gmail', 'v1', credentials=self.credens)
         self.get_email(self.service)
 
         # Call the Gmail API
@@ -85,9 +86,9 @@ class EmailReader:
         rate = engine.getProperty('rate')
         engine.setProperty('rate', rate-15)
         engine.say(f'Email {self.index}')
-        print(f'Email {self.index}')
+        # print(f'Email {self.index}')
         engine.say(output)
-        print(output)
+        # print(output)
         engine.runAndWait()
         self.next_email()
 
