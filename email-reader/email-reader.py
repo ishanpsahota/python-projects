@@ -6,9 +6,11 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import base64
 import pyttsx3
+# import speech_recognition as sr
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+
 
 class EmailReader:
 
@@ -16,6 +18,7 @@ class EmailReader:
     service = None
     engine = pyttsx3.init()
     index = 1
+    # r = sr.Recognizer()
 
     def __init__(self):
         self.auth()
@@ -96,6 +99,14 @@ class EmailReader:
         self.engine.say('Do you want to continue? ')
         self.engine.runAndWait()
         continue_check = str(input('Do you want to continue? '))
+        # with sr.Microphone() as source2:
+        #     self.r.adjust_for_ambient_noise(source2, duration=0.2)
+        #     audio2 = self.r.listen(source2)
+        #     speak_text = self.r.recognize_google(audio2)
+        #     speak_text = speak_text.lower()
+        #     print(speak_text)
+        #     self.engine.say(speak_text)
+        #     self.engine.runAndWait()
         if continue_check.lower() == 'y' or continue_check.lower() == 'yes':
             self.index += 1
             self.get_email(self.service)
