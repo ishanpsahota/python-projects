@@ -6,6 +6,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import base64
 import pyttsx3
+import re
 # import speech_recognition as sr
 
 # If modifying these scopes, delete the file token.pickle.
@@ -18,6 +19,7 @@ class EmailReader:
     service = None
     engine = pyttsx3.init()
     index = 1
+    read_count = 10
     # r = sr.Recognizer()
 
     def __init__(self):
@@ -74,47 +76,76 @@ class EmailReader:
         part = email_obj['payload']['parts'][0]
         msg = part['body']['data']
         output = base64.urlsafe_b64decode(msg)
-        output = str(output).replace('\\r', '').replace('\\n', '. ')
+        output = str(output).replace('\\r', ' ').replace('\\n', '. ').replace('\\', '')
+        # output = str(re.sub(r'[^\W]', ' ', output))
+        # output = str(re.sub(r'^(a-zA-Z)$', ' ', output))
+        output = re.sub(r'^[a-zA-z]"', '', output)
+        output = re.sub(r'^[a-zA-z]\'', '', output)
+        output = re.sub(r'>+', '', output)
+        output = re.sub(r'https[\W]+', '', output)
+        # output = re.sub(r'[(...)]', '', output)
+        # output = re.sub(r'\s+', '', output)
         output = output.split('. ')
-        output = output[1:6]
-        self.tts_email(output, self.engine)
+        # print(output)
+        output = output[0:6]
+        final_output = ''   
+        for words in output:
+            if not (words == '') or not (words == ' '):
+                final_output += words
+            # print(words)
+        # print(final_output)       
+        self.tts_email(final_output, self.engine)
 
     def tts_email(self, msg, engine):
         # engine = pyttsx3.init()
         # print(msg)
-        output = ' '
-        for word in msg:
-            output += str(word) + '. '
+        # output = ' '
+        # for word in msg:
+        #     output += str(word) + '. '
 
         rate = engine.getProperty('rate')
         engine.setProperty('rate', rate-15)
+        # engine.setProperty('gender', 'female')
+        # engine.setProperty()
+        v = engine.getProperty('voices')
+        # for vc in v:
+        #     print(vc)
+
+        engine.setProperty('voice', v[1].id)
+
         engine.say(f'Email {self.index}')
-        # print(f'Email {self.index}')
-        engine.say(output)
-        # print(output)
+        print(f'Email {self.index}')
+        print(msg)
+        engine.say(msg)        
         engine.runAndWait()
+        
         self.next_email()
 
     def next_email(self):
-        self.engine.say('Do you want to continue? ')
-        self.engine.runAndWait()
-        continue_check = str(input('Do you want to continue? '))
-        # with sr.Microphone() as source2:
-        #     self.r.adjust_for_ambient_noise(source2, duration=0.2)
-        #     audio2 = self.r.listen(source2)
-        #     speak_text = self.r.recognize_google(audio2)
-        #     speak_text = speak_text.lower()
-        #     print(speak_text)
-        #     self.engine.say(speak_text)
-        #     self.engine.runAndWait()
-        if continue_check.lower() == 'y' or continue_check.lower() == 'yes':
+        
+        while self.index < self.read_count:
             self.index += 1
             self.get_email(self.service)
         else:
-            self.engine.say('Thanks for trying the Email Reader. ')
-            print('Thanks for trying the Email Reader. ')
+            self.engine.say('Do you want to continue? ')
             self.engine.runAndWait()
+            continue_check = str(input('Do you want to continue? '))
+            # with sr.Microphone() as source2:
+            #     self.r.adjust_for_ambient_noise(source2, duration=0.2)
+            #     audio2 = self.r.listen(source2)
+            #     speak_text = self.r.recognize_google(audio2)
+            #     speak_text = speak_text.lower()
+            #     print(speak_text)
+            #     self.engine.say(speak_text)
+            #     self.engine.runAndWait()
+            if continue_check.lower() == 'y' or continue_check.lower() == 'yes':
+                self.index += 1
+                self.get_email(self.service)
+            else:
+                # self.engine.say('Thanks for trying the Email Reader. ')
+                print('Thanks for trying the Email Reader. ')
+                exit(0)
+                # self.engine.runAndWait()
 
 
 email = EmailReader()
-
